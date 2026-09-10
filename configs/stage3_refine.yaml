@@ -1,0 +1,46 @@
+# Stage III — Curriculum-based Refinement
+# (I_src, S_src) -> S_tgt fine-tuning ordered by stroke complexity, with the
+# mode switch alpha ~ B(lambda) alternating few-shot reference-guided and
+# zero-shot universal samples. Initialises from the Stage-II checkpoint.
+
+stage: 3
+seed: 42
+
+model:
+  backbone: Qwen/Qwen2.5-Coder-7B
+  tokenizer: Qwen/Qwen2.5-Coder-7B
+  init_from: runs/stage2_r2v             # restore Stage-II weights (strict=False)
+  attn_implementation: sdpa
+  config_overrides:
+    lambda_cmd: 1.0
+    lambda_coord: 1.0
+    lambda_hc: 0.1
+    lambda_scaffold: 1.0
+
+data:
+  train_split_dir: data/vfrefine-1.2m/train
+  val_split_dir: data/vfrefine-1.2m/val
+  max_length: 8192
+  num_references: 3                      # K, reference-set size (paper: K = 3 optimal)
+  lambda_fewshot: 0.5                    # mode switch alpha ~ Bernoulli(lambda)
+  p_augment: 0.5                         # shape-preserving source augmentation
+
+training:
+  output_dir: runs/stage3_refine
+  per_device_train_batch_size: 2
+  gradient_accumulation_steps: 16
+  num_train_epochs: 3
+  learning_rate: 5.0e-6
+  lr_scheduler_type: cosine
+  warmup_ratio: 0.03
+  weight_decay: 0.0
+  bf16: true
+  gradient_checkpointing: true
+  logging_steps: 10
+  save_steps: 1000
+  eval_steps: 1000
+  dataloader_num_workers: 4
+  report_to: [tensorboard]
+  curriculum:
+    enabled: true                        # stroke-complexity curriculum
+    min_fraction: 0.3                    # start from the simplest 30% glyphs

@@ -1,0 +1,18 @@
+# Core
+torch>=2.2.0
+transformers>=4.49.0,<4.52.0
+accelerate>=0.30.0
+safetensors>=0.4.3
+tokenizers>=0.20.0
+
+# Data processing
+fonttools>=4.50.0
+cairosvg>=2.7.3
+Pillow>=10.0.0
+numpy>=1.26.0
+PyYAML>=6.0
+tqdm>=4.66.0
+
+# Optional (training throughput)
+# flash-attn>=2.6.0
+

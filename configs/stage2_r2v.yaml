@@ -1,0 +1,39 @@
+# Stage II — Raster-Vector Alignment (R2V)
+# L_R2V = -log p_theta(S_tgt | E_vis(I_src)): aligns raster appearance with
+# Bézier topology. Initialises from the Stage-I checkpoint.
+
+stage: 2
+seed: 42
+
+model:
+  backbone: Qwen/Qwen2.5-Coder-7B
+  tokenizer: Qwen/Qwen2.5-Coder-7B
+  init_from: runs/stage1_ssp             # restore Stage-I weights (strict=False)
+  attn_implementation: sdpa
+  config_overrides:
+    lambda_cmd: 1.0
+    lambda_coord: 1.0
+    lambda_hc: 0.1
+    lambda_scaffold: 1.0
+
+data:
+  train_split_dir: data/vfrefine-1.2m/train
+  val_split_dir: data/vfrefine-1.2m/val
+  max_length: 8192
+
+training:
+  output_dir: runs/stage2_r2v
+  per_device_train_batch_size: 4
+  gradient_accumulation_steps: 8
+  num_train_epochs: 2
+  learning_rate: 1.0e-5
+  lr_scheduler_type: cosine
+  warmup_ratio: 0.03
+  weight_decay: 0.0
+  bf16: true
+  gradient_checkpointing: true
+  logging_steps: 10
+  save_steps: 2000
+  eval_steps: 2000
+  dataloader_num_workers: 4
+  report_to: [tensorboard]

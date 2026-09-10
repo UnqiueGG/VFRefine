@@ -1,0 +1,38 @@
+# Stage I — SVG Syntax Pre-training (SSP)
+# L_SSP = -log p_theta(S_tgt): the vision tower is frozen and the language
+# model learns SVG syntax on raw canonical SVG text.
+
+stage: 1
+seed: 42
+
+model:
+  backbone: Qwen/Qwen2.5-Coder-7B        # language backbone initialisation
+  tokenizer: Qwen/Qwen2.5-Coder-7B
+  attn_implementation: sdpa              # flash_attention_2 if available
+  config_overrides:
+    lambda_cmd: 1.0
+    lambda_coord: 1.0
+    lambda_hc: 0.1
+    lambda_scaffold: 1.0
+
+data:
+  train_jsonl: data/vfrefine-1.2m/train/pairs.jsonl
+  val_jsonl: data/vfrefine-1.2m/val/pairs.jsonl
+  max_length: 8192
+
+training:
+  output_dir: runs/stage1_ssp
+  per_device_train_batch_size: 8
+  gradient_accumulation_steps: 4
+  num_train_epochs: 2
+  learning_rate: 1.0e-5
+  lr_scheduler_type: cosine
+  warmup_ratio: 0.03
+  weight_decay: 0.0
+  bf16: true
+  gradient_checkpointing: true
+  logging_steps: 10
+  save_steps: 2000
+  eval_steps: 2000
+  dataloader_num_workers: 4
+  report_to: [tensorboard]
